@@ -1,0 +1,39 @@
+info:
+  name: Get requests
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost:3000/api/tickets
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: category
+      value: incident
+      type: query
+      disabled: true
+    - name: search
+      value: subapplication
+      type: query
+      disabled: true
+    - name: sortBy
+      value: id
+      type: query
+      disabled: true
+    - name: sortOrder
+      value: ASC
+      type: query
+      disabled: true
+    - name: limit
+      value: "10"
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

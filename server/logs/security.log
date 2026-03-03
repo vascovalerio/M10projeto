@@ -1,1 +1,3 @@
 {"timestamp":"2026-03-03T13:09:10.889Z","event":"LOGIN_SUCCESS","ip":"::1","email":"vascoupskill@gmail.com","userId":1}
+{"timestamp":"2026-03-03T16:00:45.413Z","event":"LOGIN_FAILED","ip":"::1","failuresInWindow":1,"email":"teste@teste.teste"}
+{"timestamp":"2026-03-03T16:01:25.408Z","event":"LOGIN_SUCCESS","ip":"::1","email":"teste@teste.teste","userId":2}
