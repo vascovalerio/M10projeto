@@ -37,14 +37,33 @@ function guard(req, res, next) {
 
   if (state.blockedUntil && state.blockedUntil > now) {
     const retryAfterSec = Math.ceil((state.blockedUntil - now) / 1000);
+
+    // Converter para minutos + segundos
+    const minutes = Math.floor(retryAfterSec / 60);
+    const seconds = retryAfterSec % 60;
+
+    // Formatação amigável
+    let timeMessage;
+    if (minutes > 0) {
+      timeMessage = `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+    } else {
+      timeMessage = `${seconds}s`;
+    }
+
+    // Header HTTP deve continuar em segundos
     res.set('Retry-After', String(retryAfterSec));
 
-    writeSecurityLog('LOGIN_BLOCKED_ATTEMPT', { ip, retryAfterSec, blockedUntil: new Date(state.blockedUntil).toISOString() });
+    writeSecurityLog('LOGIN_BLOCKED_ATTEMPT', {
+      ip,
+      retryAfterSec,
+      blockedUntil: new Date(state.blockedUntil).toISOString()
+    });
 
     return res.status(429).json({
       error: 'Too Many Requests',
-      message: `IP bloqueado temporariamente devido a múltiplas falhas de login. Tenta novamente em ~${retryAfterSec}s.`,
-      retryAfterSec
+      message: `IP bloqueado temporariamente devido a múltiplas falhas de login. Tenta novamente em ${timeMessage}.`,
+      retryAfterSec,
+      retryAfterFormatted: timeMessage
     });
   }
 
