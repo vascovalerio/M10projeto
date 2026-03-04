@@ -5,12 +5,14 @@ const path = require('path');
 // IMPORTANT: set DB path before importing app (app.js reads env + initializes DB)
 process.env.DATABASE_URL = './data/test-security.db';
 process.env.NODE_ENV = 'test';
+process.env.SECRET_ENCRYPTION_KEY = '00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff';
 
-const { initializeDatabase, closeDatabase } = require('../src/config/database');
+const { initializeDatabase, closeDatabase, getDatabase } = require('../src/config/database');
 const userModel = require('../src/models/userModel');
 
 let app;
 
+describe('Security exercises (2.1 RBAC + 2.2 IDOR protection + 3.1 SQLi + 3.2 XSS/encryption)', () => {
 describe('Security exercises (2.1 RBAC + 2.2 IDOR protection + 3.1 SQLi)', () => {
   const dbFile = path.resolve(__dirname, '..', process.env.DATABASE_URL);
 
@@ -169,6 +171,47 @@ describe('Security exercises (2.1 RBAC + 2.2 IDOR protection + 3.1 SQLi)', () =>
     expect(sqliAttempt.status).toBe(200);
     expect(Array.isArray(sqliAttempt.body.data)).toBe(true);
     expect(sqliAttempt.body.data.length).toBe(0);
+  });
+
+
+  test('3.2 - secret content is encrypted at rest and sanitized on output', async () => {
+    await request(app).post('/api/auth/register').send({
+      email: 'xss@example.com',
+      password: 'Password#123'
+    });
+
+    const login = await request(app).post('/api/auth/login').send({
+      email: 'xss@example.com',
+      password: 'Password#123'
+    });
+    const token = login.body.token;
+
+    const payload = '<script>alert(1)</script>';
+
+    const created = await request(app)
+      .post('/secrets')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'xss-note', value: payload });
+
+    expect(created.status).toBe(201);
+    expect(created.body.value).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
+
+    const secretId = created.body.id;
+
+    const db = getDatabase();
+    const row = await db.get('SELECT value FROM secrets WHERE id = ?', [secretId]);
+
+    expect(row).toBeTruthy();
+    expect(typeof row.value).toBe('string');
+    expect(row.value).not.toBe(payload);
+    expect(row.value).toMatch(/^enc:v1:/);
+
+    const fetched = await request(app)
+      .get(`/secrets/${secretId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(fetched.status).toBe(200);
+    expect(fetched.body.value).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
 
 });
