@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const secretModel = require('../models/secretModel');
+const { escapeHtml } = require('../utils/sanitize');
 
 /**
  * POST /secrets
@@ -15,13 +16,7 @@ async function createSecret(req, res, next) {
     const ownerId = req.auth.user.id;
 
     const secret = await secretModel.createSecret({ ownerId, name, value });
-    return res.status(201).json({
-      id: secret.id,
-      owner_id: secret.owner_id,
-      name: secret.name,
-      value: secret.value,
-      created_at: secret.created_at
-    });
+    return res.status(201).json(serializeSecret(secret));
   } catch (err) {
     return next(err);
   }
@@ -50,19 +45,41 @@ async function getSecret(req, res, next) {
       return res.status(404).json({ error: 'Not Found', message: 'Secret not found' });
     }
 
-    return res.json({
-      id: secret.id,
-      owner_id: secret.owner_id,
-      name: secret.name,
-      value: secret.value,
-      created_at: secret.created_at
-    });
+    return res.json(serializeSecret(secret));
+  } catch (err) {
+    return next(err);
+  }
+}
+
+
+/**
+ * GET /secrets?search=foo
+ * List authenticated user's secrets with optional search.
+ */
+async function listSecrets(req, res, next) {
+  try {
+    const ownerId = req.auth.user.id;
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+
+    const secrets = await secretModel.listSecretsForOwner({ ownerId, search });
+    return res.json({ data: secrets.map(serializeSecret) });
   } catch (err) {
     return next(err);
   }
 }
 
 module.exports = {
+  listSecrets,
   createSecret,
   getSecret
 };
+
+function serializeSecret(secret) {
+  return {
+    id: secret.id,
+    owner_id: secret.owner_id,
+    name: escapeHtml(secret.name),
+    value: escapeHtml(secret.value),
+    created_at: secret.created_at
+  };
+}
