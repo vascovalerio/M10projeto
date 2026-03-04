@@ -13,19 +13,24 @@ require('dotenv').config();
 const dbPath = path.resolve(__dirname, '../../', process.env.DATABASE_URL || './data/tickets.db');
 
 let db = null;
+let initializingPromise = null;
 
 /**
  * Initialize database connection and create tables
  */
 async function initializeDatabase() {
-  try {
+  if (db) return db;
+  if (initializingPromise) return initializingPromise;
+
+  initializingPromise = (async () => {
     await fs.ensureDir(path.dirname(dbPath));
 
-    db = await sqlite.open({
+    const openedDb = await sqlite.open({
       filename: dbPath,
       driver: sqlite3.Database
     });
 
+    db = openedDb;
     console.log(`Database connected: ${dbPath}`);
 
     // Tickets table
@@ -108,10 +113,16 @@ async function initializeDatabase() {
     console.log('Database tables initialized successfully');
 
     return db;
-  } catch (error) {
-    console.error('Database initialization failed:', error);
-    throw error;
-  }
+  })()
+    .catch(error => {
+      console.error('Database initialization failed:', error);
+      throw error;
+    })
+    .finally(() => {
+      initializingPromise = null;
+    });
+
+  return initializingPromise;
 }
 
 function getDatabase() {

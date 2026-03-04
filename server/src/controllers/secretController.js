@@ -62,7 +62,25 @@ async function getSecret(req, res, next) {
   }
 }
 
+
+/**
+ * GET /secrets?search=foo
+ * List authenticated user's secrets with optional search.
+ */
+async function listSecrets(req, res, next) {
+  try {
+    const ownerId = req.auth.user.id;
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+
+    const secrets = await secretModel.listSecretsForOwner({ ownerId, search });
+    return res.json({ data: secrets });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
+  listSecrets,
   createSecret,
   getSecret
 };

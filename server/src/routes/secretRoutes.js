@@ -4,6 +4,9 @@ const { body, param } = require('express-validator');
 
 const secretController = require('../controllers/secretController');
 
+// GET /secrets
+router.get('/', secretController.listSecrets);
+
 // POST /secrets
 router.post('/', [
   body('name').trim().notEmpty().withMessage('name is required'),
