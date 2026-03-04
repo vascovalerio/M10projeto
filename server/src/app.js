@@ -15,8 +15,11 @@ const healthRoutes = require('./routes/healthRoutes');
 const authRoutes = require('./routes/authRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const systemRoutes = require('./routes/systemRoutes');
+const secretRoutes = require('./routes/secretRoutes');
 
 const { requireAuth } = require('./middleware/requireAuth');
+const { requireRole } = require('./middleware/requireRole');
 
 const logger = require('./utils/logger');
 const swaggerDocument = YAML.load(path.join(__dirname, '../docs/openapi.yaml'));
@@ -63,6 +66,12 @@ app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', requireAuth, ticketRoutes);
 app.use('/api/stats', requireAuth, statsRoutes);
+
+// Secrets (exercise 2.2)
+app.use('/secrets', requireAuth, secretRoutes);
+
+// System operations
+app.use('/system', requireAuth, requireRole('admin'), systemRoutes);
 
 // 404 & error handler
 app.use((req,res)=>res.status(404).json({ error:'Not Found', message:`Route ${req.method} ${req.path} not found` }));

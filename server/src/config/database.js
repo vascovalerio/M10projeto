@@ -52,9 +52,17 @@ async function initializeDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Backwards-compatible migration: add role column if upgrading an existing DB
+    const userCols = await db.all(`PRAGMA table_info(users)`);
+    const hasRole = userCols.some(c => c && c.name === 'role');
+    if (!hasRole) {
+      await db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`);
+    }
 
     // Sessions table (opaque bearer token)
     await db.exec(`
@@ -67,6 +75,22 @@ async function initializeDatabase() {
         user_agent TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
       )
+    `);
+
+    // Secrets table (exercise 2.2)
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS secrets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        owner_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        value TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(owner_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_secrets_owner_id ON secrets(owner_id);
     `);
 
     // Indexes

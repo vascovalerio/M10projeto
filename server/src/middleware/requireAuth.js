@@ -34,7 +34,7 @@ async function requireAuth(req, res, next) {
     req.auth = {
       token,
       session,
-      user: { id: user.id, email: user.email }
+      user: { id: user.id, email: user.email, role: user.role }
     };
 
     return next();

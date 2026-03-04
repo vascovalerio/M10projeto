@@ -13,6 +13,15 @@ const sessionModel = require('../models/sessionModel');
 const loginRateLimiter = require('../middleware/loginRateLimiter');
 const { isStrongPassword, hashPassword, verifyPassword } = require('../utils/password');
 
+function isAdminEmail(email) {
+  const raw = process.env.ADMIN_EMAILS || '';
+  const admins = raw
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
+  return admins.includes(email);
+}
+
 async function register(req, res, next) {
   try {
     const errors = validationResult(req);
@@ -34,11 +43,17 @@ async function register(req, res, next) {
     }
 
     const passwordHash = await hashPassword(password);
-    const user = await userModel.createUser({ email, passwordHash });
+    let user = await userModel.createUser({ email, passwordHash });
+
+    // Optional: allow easy bootstrapping of admins via env var
+    if (isAdminEmail(email) && user.role !== 'admin') {
+      user = await userModel.setUserRole(user.id, 'admin');
+    }
 
     return res.status(201).json({
       id: user.id,
       email: user.email,
+      role: user.role,
       created_at: user.created_at
     });
   } catch (err) {
@@ -87,7 +102,7 @@ async function login(req, res, next) {
     return res.json({
       token: session.token,
       expiresAt: session.expiresAt,
-      user: { id: userRow.id, email: userRow.email }
+      user: { id: userRow.id, email: userRow.email, role: userRow.role }
     });
 
   } catch (err) {
