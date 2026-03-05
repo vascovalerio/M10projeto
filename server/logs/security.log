@@ -115,3 +115,16 @@
 {"timestamp":"2026-03-04T12:00:04.541Z","event":"LOGIN_SUCCESS","ip":"::1","email":"teste@teste.teste","userId":2}
 {"timestamp":"2026-03-04T12:06:48.313Z","event":"LOGIN_SUCCESS","ip":"127.0.0.1","email":"idor-a@example.com","userId":4}
 {"timestamp":"2026-03-04T12:06:48.571Z","event":"LOGIN_SUCCESS","ip":"127.0.0.1","email":"idor-b@example.com","userId":5}
+{"timestamp":"2026-03-05T12:28:10.389Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T12:30:07.464Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T12:42:57.450Z","event":"LOGIN_SUCCESS","ip":"::1","email":"ad***@teste.teste","userId":6}
+{"timestamp":"2026-03-05T12:45:56.364Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T12:46:05.202Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T12:49:54.172Z","event":"LOGIN_SUCCESS","ip":"::1","email":"ad***@teste.teste","userId":6}
+{"timestamp":"2026-03-05T12:59:05.209Z","event":"LOGIN_SUCCESS","ip":"::1","email":"ad***@teste.teste","userId":6}
+{"timestamp":"2026-03-05T13:03:28.548Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T13:05:56.819Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T13:06:42.752Z","event":"LOGIN_SUCCESS","ip":"::1","email":"ad***@teste.teste","userId":6}
+{"timestamp":"2026-03-05T13:08:28.993Z","event":"LOGIN_SUCCESS","ip":"::1","email":"ad***@teste.teste","userId":6}
+{"timestamp":"2026-03-05T13:08:42.573Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
+{"timestamp":"2026-03-05T13:11:22.444Z","event":"LOGIN_SUCCESS","ip":"::1","email":"te***@teste.teste","userId":2}
