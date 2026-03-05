@@ -15,12 +15,12 @@ async function createUser({ email, passwordHash }) {
 
 async function getUserByEmail(email) {
   const db = getDatabase();
-  return db.get(`SELECT id, email, password_hash, role, created_at FROM users WHERE email = ?`, [email]);
+  return db.get(`SELECT id, email, password_hash, role, token_version, created_at FROM users WHERE email = ?`, [email]);
 }
 
 async function getUserById(id) {
   const db = getDatabase();
-  return db.get(`SELECT id, email, role, created_at FROM users WHERE id = ?`, [id]);
+  return db.get(`SELECT id, email, role, token_version, created_at FROM users WHERE id = ?`, [id]);
 }
 
 async function setUserRole(userId, role) {
@@ -29,9 +29,16 @@ async function setUserRole(userId, role) {
   return getUserById(userId);
 }
 
+async function incrementTokenVersion(userId) {
+  const db = getDatabase();
+  await db.run(`UPDATE users SET token_version = token_version + 1 WHERE id = ?`, [userId]);
+  return getUserById(userId);
+}
+
 module.exports = {
   createUser,
   getUserByEmail,
   getUserById,
-  setUserRole
+  setUserRole,
+  incrementTokenVersion
 };

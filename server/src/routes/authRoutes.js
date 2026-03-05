@@ -30,6 +30,7 @@ router.post(
 );
 
 router.get('/me', requireAuth, authController.me);
+router.post('/refresh', authController.refresh);
 router.post('/logout', requireAuth, authController.logout);
 
 module.exports = router;

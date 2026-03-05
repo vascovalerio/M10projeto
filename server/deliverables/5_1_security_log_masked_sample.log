@@ -1,0 +1,2 @@
+{"timestamp":"2026-03-05T11:30:08.958Z","event":"LOGIN_FAILED","email":"au***@example.com","password":"[REDACTED_PASSWORD]","token":"abcd...[REDACTED]...2345"}
+{"timestamp":"2026-03-05T11:30:08.961Z","event":"LOGIN_SUCCESS","email":"au***@example.com","authorization":"[REDACTED_SECRET]"}

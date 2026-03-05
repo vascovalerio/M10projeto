@@ -1,11 +1,11 @@
 /**
  * requireAuth middleware
  *
- * Uses opaque bearer tokens stored in the sessions table.
+ * Uses short-lived JWT access tokens.
  */
 
-const sessionModel = require('../models/sessionModel');
 const userModel = require('../models/userModel');
+const jwt = require('../utils/jwt');
 
 async function requireAuth(req, res, next) {
   try {
@@ -20,20 +20,26 @@ async function requireAuth(req, res, next) {
       return res.status(401).json({ error: 'Unauthorized', message: 'Missing Bearer token' });
     }
 
-    const session = await sessionModel.getSessionByToken(token);
-    if (!session) {
-      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired session' });
+    let payload;
+    try {
+      payload = jwt.verify(token);
+    } catch (_err) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid or expired token' });
     }
 
-    const user = await userModel.getUserById(session.user_id);
+    const userId = Number(payload.sub);
+    const user = await userModel.getUserById(userId);
     if (!user) {
-      await sessionModel.deleteSession(token);
-      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid session' });
+      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid token' });
+    }
+
+    const tokenVersion = Number(payload.tokenVersion || 0);
+    if (tokenVersion !== Number(user.token_version || 0)) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Token revoked' });
     }
 
     req.auth = {
       token,
-      session,
       user: { id: user.id, email: user.email, role: user.role }
     };
 

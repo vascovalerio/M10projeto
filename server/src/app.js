@@ -25,6 +25,10 @@ const logger = require('./utils/logger');
 const swaggerDocument = YAML.load(path.join(__dirname, '../docs/openapi.yaml'));
 
 const app = express();
+const allowedOrigins = (process.env.CLIENT_ORIGINS || 'http://localhost:3000,http://localhost:5500')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 
 // If deployed behind a reverse proxy, this enables req.ip to be set correctly
 app.set('trust proxy', true);
@@ -47,8 +51,29 @@ initializeDatabase()
   });
 
 // Middleware
-app.use(helmet());
-app.use(cors({ origin: '*', methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'], allowedHeaders: ['Content-Type','Authorization'] }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"]
+    }
+  },
+  frameguard: { action: 'deny' },
+  hsts: { maxAge: 15552000, includeSubDomains: true }
+}));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS origin não autorizada'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined', { stream: { write: msg => logger.info(msg.trim()) } }));
@@ -76,6 +101,9 @@ app.use('/system', requireAuth, requireRole('admin'), systemRoutes);
 // 404 & error handler
 app.use((req,res)=>res.status(404).json({ error:'Not Found', message:`Route ${req.method} ${req.path} not found` }));
 app.use((err, req, res, next)=>{
+  if (err && err.message === 'CORS origin não autorizada') {
+    return res.status(403).json({ error: 'Forbidden', message: err.message });
+  }
   logger.error('Unhandled error:', err);
   res.status(err.status||500).json({ error:err.name||'Internal Server Error', message:err.message||'Unexpected error', ...(process.env.NODE_ENV==='development' && { stack: err.stack }) });
 });

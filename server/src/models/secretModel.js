@@ -67,31 +67,6 @@ async function listSecretsForOwner({ ownerId, search }) {
   );
 }
 
-/**
- * Lists secrets that belong to a given owner, with optional text search on name/value.
- *
- * Uses parameterized queries to avoid SQL injection.
- */
-async function listSecretsForOwner({ ownerId, search }) {
-  const db = getDatabase();
-
-  const baseSql = `
-    SELECT id, owner_id, name, value, created_at
-    FROM secrets
-    WHERE owner_id = ?
-  `;
-
-  if (!search) {
-    return db.all(`${baseSql} ORDER BY created_at DESC`, [ownerId]);
-  }
-
-  const likeTerm = `%${search}%`;
-  return db.all(
-    `${baseSql} AND (name LIKE ? OR value LIKE ?) ORDER BY created_at DESC`,
-    [ownerId, likeTerm, likeTerm]
-  );
-}
-
 module.exports = {
   createSecret,
   getSecretById,

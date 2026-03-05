@@ -95,7 +95,7 @@ paths:
   /api/auth/login:
     post:
       summary: Login
-      description: Verifica a password (hash) e devolve um Bearer token de sessão.
+      description: Verifica a password (hash), devolve JWT de acesso e define refresh token em cookie HttpOnly.
       tags:
         - Auth
       requestBody:
@@ -131,6 +131,30 @@ paths:
         '429':
           description: IP bloqueado temporariamente (proteção brute-force)
 
+  /api/auth/refresh:
+    post:
+      summary: Refresh de token
+      description: Usa o cookie `refresh_token` para emitir um novo JWT de acesso.
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Token renovado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  accessToken:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Refresh token inválido/expirado/ausente
+
   /api/auth/me:
     get:
       summary: Utilizador autenticado
@@ -163,6 +187,56 @@ paths:
           description: Logout com sucesso
         '401':
           description: Não autenticado
+
+  /system/audit-logs:
+    get:
+      summary: Listar rastos de auditoria
+      description: Devolve eventos de auditoria (admin only).
+      tags:
+        - System
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 500
+          description: Número máximo de registos devolvidos
+      responses:
+        '200':
+          description: Lista de logs de auditoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        user_id:
+                          type: integer
+                          nullable: true
+                        action:
+                          type: string
+                        result:
+                          type: string
+                          enum: [SUCCESS, FAIL]
+                        details:
+                          type: object
+                        created_at:
+                          type: string
+                          format: date-time
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissões (não admin)
 
   /api/tickets:
     get:

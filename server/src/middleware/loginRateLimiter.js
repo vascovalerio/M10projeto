@@ -8,10 +8,15 @@
  */
 
 const { writeSecurityLog } = require('../utils/securityLog');
+const auditLogModel = require('../models/auditLogModel');
 
 const MAX_FAILURES = Number(process.env.LOGIN_MAX_FAILURES || 5);
 const WINDOW_MS = Number(process.env.LOGIN_FAIL_WINDOW_MS || (15 * 60 * 1000));
 const BLOCK_MS = Number(process.env.LOGIN_BLOCK_MS || (15 * 60 * 1000));
+
+function writeAudit(entry) {
+  auditLogModel.createAuditLog(entry).catch(() => {});
+}
 
 // In-memory store: ip -> { failures: number[], blockedUntil?: number }
 const store = new Map();
@@ -58,6 +63,11 @@ function guard(req, res, next) {
       retryAfterSec,
       blockedUntil: new Date(state.blockedUntil).toISOString()
     });
+    writeAudit({
+      action: 'AUTH_LOGIN_BLOCKED',
+      result: 'FAIL',
+      details: { ip, retryAfterSec }
+    });
 
     return res.status(429).json({
       error: 'Too Many Requests',
@@ -80,6 +90,12 @@ function recordFailure(req, meta = {}) {
   state.failures.push(now);
 
   writeSecurityLog('LOGIN_FAILED', { ip, failuresInWindow: state.failures.length, ...meta });
+  writeAudit({
+    userId: meta.userId || null,
+    action: 'AUTH_LOGIN_ATTEMPT',
+    result: 'FAIL',
+    details: { ip, failuresInWindow: state.failures.length, email: meta.email }
+  });
 
   if (state.failures.length >= MAX_FAILURES) {
     state.blockedUntil = now + BLOCK_MS;
@@ -90,6 +106,11 @@ function recordFailure(req, meta = {}) {
       ip,
       blockedUntil: new Date(state.blockedUntil).toISOString(),
       blockMinutes: Math.round(BLOCK_MS / 60000)
+    });
+    writeAudit({
+      action: 'AUTH_LOGIN_IP_BLOCKED',
+      result: 'FAIL',
+      details: { ip, blockMinutes: Math.round(BLOCK_MS / 60000) }
     });
 
     return { blocked: true, blockedUntil: state.blockedUntil };
@@ -102,6 +123,12 @@ function recordSuccess(req, meta = {}) {
   const ip = getClientIp(req);
   store.delete(ip);
   writeSecurityLog('LOGIN_SUCCESS', { ip, ...meta });
+  writeAudit({
+    userId: meta.userId || null,
+    action: 'AUTH_LOGIN_ATTEMPT',
+    result: 'SUCCESS',
+    details: { ip, email: meta.email }
+  });
 }
 
 module.exports = {

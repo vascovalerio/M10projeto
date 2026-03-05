@@ -68,6 +68,10 @@ async function initializeDatabase() {
     if (!hasRole) {
       await db.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`);
     }
+    const hasTokenVersion = userCols.some(c => c && c.name === 'token_version');
+    if (!hasTokenVersion) {
+      await db.exec(`ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0`);
+    }
 
     // Sessions table (opaque bearer token)
     await db.exec(`
@@ -80,6 +84,35 @@ async function initializeDatabase() {
         user_agent TEXT,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
       )
+    `);
+
+    // Audit logs (exercise 5.1)
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        action TEXT NOT NULL,
+        result TEXT NOT NULL CHECK(result IN ('SUCCESS', 'FAIL')),
+        details TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
+    await db.exec(`
+      CREATE TRIGGER IF NOT EXISTS trg_audit_logs_no_update
+      BEFORE UPDATE ON audit_logs
+      BEGIN
+        SELECT RAISE(ABORT, 'audit_logs are immutable');
+      END;
+    `);
+
+    await db.exec(`
+      CREATE TRIGGER IF NOT EXISTS trg_audit_logs_no_delete
+      BEFORE DELETE ON audit_logs
+      BEGIN
+        SELECT RAISE(ABORT, 'audit_logs are immutable');
+      END;
     `);
 
     // Secrets table (exercise 2.2)
@@ -108,6 +141,8 @@ async function initializeDatabase() {
     await db.exec(`
       CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
       CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
     `);
 
     console.log('Database tables initialized successfully');
