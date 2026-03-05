@@ -10,6 +10,7 @@
 const { validationResult } = require('express-validator');
 const userModel = require('../models/userModel');
 const sessionModel = require('../models/sessionModel');
+const auditLogModel = require('../models/auditLogModel');
 const loginRateLimiter = require('../middleware/loginRateLimiter');
 const { isStrongPassword, hashPassword, verifyPassword } = require('../utils/password');
 const jwt = require('../utils/jwt');
@@ -77,6 +78,11 @@ async function register(req, res, next) {
     const password = String(req.body.password || '');
 
     if (!isStrongPassword(password)) {
+      await auditLogModel.createAuditLog({
+        action: 'AUTH_REGISTER',
+        result: 'FAIL',
+        details: { email, reason: 'weak_password' }
+      });
       return res.status(400).json({
         error: 'Validation Error',
         message: 'Password fraca. Requisitos: >=8 caracteres, 1 número e 1 caracter especial.'
@@ -85,6 +91,12 @@ async function register(req, res, next) {
 
     const existing = await userModel.getUserByEmail(email);
     if (existing) {
+      await auditLogModel.createAuditLog({
+        userId: existing.id,
+        action: 'AUTH_REGISTER',
+        result: 'FAIL',
+        details: { email, reason: 'email_exists' }
+      });
       return res.status(409).json({ error: 'Conflict', message: 'Email já registado.' });
     }
 
@@ -95,6 +107,13 @@ async function register(req, res, next) {
     if (isAdminEmail(email) && user.role !== 'admin') {
       user = await userModel.setUserRole(user.id, 'admin');
     }
+
+    await auditLogModel.createAuditLog({
+      userId: user.id,
+      action: 'AUTH_REGISTER',
+      result: 'SUCCESS',
+      details: { email }
+    });
 
     return res.status(201).json({
       id: user.id,
@@ -121,6 +140,11 @@ async function login(req, res, next) {
     const userRow = await userModel.getUserByEmail(email);
     if (!userRow) {
       loginRateLimiter.recordFailure(req, { email });
+      await auditLogModel.createAuditLog({
+        action: 'AUTH_LOGIN',
+        result: 'FAIL',
+        details: { email, reason: 'user_not_found' }
+      });
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Credenciais inválidas.'
@@ -131,6 +155,12 @@ async function login(req, res, next) {
     const ok = await verifyPassword(password, userRow.password_hash);
     if (!ok) {
       loginRateLimiter.recordFailure(req, { email, userId: userRow.id });
+      await auditLogModel.createAuditLog({
+        userId: userRow.id,
+        action: 'AUTH_LOGIN',
+        result: 'FAIL',
+        details: { email, reason: 'invalid_password' }
+      });
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Credenciais inválidas.'
@@ -146,6 +176,13 @@ async function login(req, res, next) {
     const session = await sessionModel.createSession(userRow.id, { ip, userAgent });
     const accessToken = buildAccessToken(userRow);
     setRefreshCookie(res, session.token);
+
+    await auditLogModel.createAuditLog({
+      userId: userRow.id,
+      action: 'AUTH_LOGIN',
+      result: 'SUCCESS',
+      details: { email, ip }
+    });
 
     return res.json({
       token: accessToken,
@@ -170,6 +207,12 @@ async function logout(req, res, next) {
       await sessionModel.deleteSession(refreshToken);
     }
     clearRefreshCookie(res);
+    await auditLogModel.createAuditLog({
+      userId: req.auth.user.id,
+      action: 'AUTH_LOGOUT',
+      result: 'SUCCESS',
+      details: { email: req.auth.user.email }
+    });
     return res.json({ message: 'Logged out' });
   } catch (err) {
     return next(err);
@@ -180,12 +223,22 @@ async function refresh(req, res, next) {
   try {
     const refreshToken = getCookieValue(req, REFRESH_COOKIE_NAME);
     if (!refreshToken) {
+      await auditLogModel.createAuditLog({
+        action: 'AUTH_REFRESH',
+        result: 'FAIL',
+        details: { reason: 'missing_refresh_token' }
+      });
       return res.status(401).json({ error: 'Unauthorized', message: 'Refresh token em falta.' });
     }
 
     const currentSession = await sessionModel.getSessionByToken(refreshToken);
     if (!currentSession) {
       clearRefreshCookie(res);
+      await auditLogModel.createAuditLog({
+        action: 'AUTH_REFRESH',
+        result: 'FAIL',
+        details: { reason: 'invalid_session' }
+      });
       return res.status(401).json({ error: 'Unauthorized', message: 'Refresh token inválido ou expirado.' });
     }
 
@@ -193,6 +246,11 @@ async function refresh(req, res, next) {
     if (!user) {
       await sessionModel.deleteSession(refreshToken);
       clearRefreshCookie(res);
+      await auditLogModel.createAuditLog({
+        action: 'AUTH_REFRESH',
+        result: 'FAIL',
+        details: { reason: 'user_not_found' }
+      });
       return res.status(401).json({ error: 'Unauthorized', message: 'Utilizador inválido.' });
     }
 
@@ -203,6 +261,12 @@ async function refresh(req, res, next) {
     setRefreshCookie(res, newSession.token);
 
     const accessToken = buildAccessToken(user);
+    await auditLogModel.createAuditLog({
+      userId: user.id,
+      action: 'AUTH_REFRESH',
+      result: 'SUCCESS',
+      details: { email: user.email }
+    });
     return res.json({
       token: accessToken,
       accessToken,

@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const { LOG_FILE } = require('../utils/securityLog');
+const auditLogModel = require('../models/auditLogModel');
 
 async function getSecurityLogs(req, res, next) {
   try {
@@ -30,4 +31,14 @@ async function getSecurityLogs(req, res, next) {
   }
 }
 
-module.exports = { getSecurityLogs };
+async function getAuditLogs(req, res, next) {
+  try {
+    const limit = Number(req.query.limit || 100);
+    const logs = await auditLogModel.listAuditLogs({ limit });
+    return res.json({ logs });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { getSecurityLogs, getAuditLogs };
