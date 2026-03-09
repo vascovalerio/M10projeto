@@ -1,17 +1,17 @@
 info:
-  name: "Login (role: admin)"
+  name: Register (new user)
   type: http
-  seq: 4
+  seq: 2
 
 http:
   method: POST
-  url: http://localhost:3000/api/auth/login
+  url: http://localhost:3000/api/auth/register
   body:
     type: json
     data: |-
       {
-        "email":"admin@teste.teste",
-        "password":"admin123!"  
+        "email":"registo1@teste.teste",
+        "password":"teste123!"  
         
       }
   auth: inherit

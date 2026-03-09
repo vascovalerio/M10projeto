@@ -1,7 +1,7 @@
 info:
   name: Refresh
   type: http
-  seq: 9
+  seq: 11
 
 http:
   method: POST
@@ -10,10 +10,7 @@ http:
     - name: Content-Type
       value: application/json
     - name: Authorization
-      value: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS50ZXN0ZSIsInJvbGUiOiJ1c2VyIiwidG9rZW5WZXJzaW9uIjowLCJpYXQiOjE3NzI4MTQ3MzAsImV4cCI6MTc3MjgxNDgzMH0.0a45wnA2LIMIAjqasg6tSMiqQqfbyIqRrVQQm_EeJL4
-    - name: Authorization
-      value: Bearer mPU9HELDW_HxIl556lGgUtqlEuAMlcBhkna9vyj35a4
-      disabled: true
+      value: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS50ZXN0ZSIsInJvbGUiOiJ1c2VyIiwidG9rZW5WZXJzaW9uIjowLCJpYXQiOjE3NzMwNzUyODksImV4cCI6MTc3MzA3NTg4OX0.rZe3H7b40mzQgAvysqsRaP9NzBUUAqL6RawteIUYjkA
   body:
     type: json
     data: ""
