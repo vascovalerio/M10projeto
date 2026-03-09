@@ -1,23 +1,19 @@
 info:
-  name: Secret
+  name: ME
   type: http
-  seq: 5
+  seq: 8
 
 http:
   method: GET
-  url: http://localhost:3000/secrets/:secretId
+  url: http://localhost:3000/api/auth/me
   headers:
     - name: Content-Type
       value: application/json
     - name: Authorization
-      value: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS50ZXN0ZSIsInJvbGUiOiJ1c2VyIiwidG9rZW5WZXJzaW9uIjowLCJpYXQiOjE3NzI4MTA3MDgsImV4cCI6MTc3MjgxMDgwOH0.lO8cshIamIyRhXCx1CXAIiTdm1w6RnesHV_ZOPjTHEo
+      value: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZW1haWwiOiJ0ZXN0ZUB0ZXN0ZS50ZXN0ZSIsInJvbGUiOiJ1c2VyIiwidG9rZW5WZXJzaW9uIjowLCJpYXQiOjE3NzI4MTQ3MzAsImV4cCI6MTc3MjgxNDgzMH0.0a45wnA2LIMIAjqasg6tSMiqQqfbyIqRrVQQm_EeJL4
     - name: Authorization
       value: Bearer mPU9HELDW_HxIl556lGgUtqlEuAMlcBhkna9vyj35a4
       disabled: true
-  params:
-    - name: secretId
-      value: "1"
-      type: path
   body:
     type: json
     data: ""
