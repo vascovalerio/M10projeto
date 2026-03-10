@@ -39,11 +39,7 @@ async function getSecretByIdForOwner(id, ownerId) {
   return decryptSecretRow(row);
 }
 
-/**
- * Lists secrets that belong to a given owner, with optional text search on name/value.
- *
- * Uses parameterized queries to avoid SQL injection.
- */
+//Lists secrets that belong to a given owner, with optional text search on name/value.
 async function listSecretsForOwner({ ownerId, search }) {
   const db = getDatabase();
 
@@ -66,6 +62,21 @@ async function listSecretsForOwner({ ownerId, search }) {
     String(secret.value).toLowerCase().includes(needle)
   );
 }
+
+/*TESTING SQL INJECTION
+async function listSecretsForOwner({ ownerId, search }) {
+  const db = getDatabase();
+
+  const query = `
+    SELECT id, owner_id, name, value, created_at
+    FROM secrets
+    WHERE owner_id = ${ownerId}
+    AND name LIKE '%${search}%'
+  `;
+
+  return db.all(query);
+}
+*/
 
 module.exports = {
   createSecret,

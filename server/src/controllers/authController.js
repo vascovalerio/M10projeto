@@ -186,7 +186,6 @@ async function login(req, res, next) {
 
     return res.json({
       token: accessToken,
-      accessToken,
       expiresAt: session.expiresAt,
       user: { id: userRow.id, email: userRow.email, role: userRow.role }
     });
@@ -269,7 +268,6 @@ async function refresh(req, res, next) {
     });
     return res.json({
       token: accessToken,
-      accessToken,
       expiresAt: newSession.expiresAt
     });
   } catch (err) {
