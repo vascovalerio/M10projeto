@@ -1,13 +1,17 @@
 {
-  "name": "m10projeto",
+  "name": "M10projeto",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Projeto M10 - App Node.js para Azure",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-    "start": "npm start"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
+
