@@ -2,7 +2,7 @@
   "name": "M10projeto",
   "version": "1.0.0",
   "description": "Projeto M10 - App Node.js para Azure",
-  "main": "server.js",
+  "main": "server/server.js",
   "scripts": {
     "start": "node server.js"
   },
