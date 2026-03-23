@@ -13,21 +13,22 @@ app.get('/', (req, res) => {
   res.send('Backend a funcionar no Azure! 🎉');
 });
 
-// O teu código original (adaptado para usar express)
-const yourApp = express(); // Usa o teu app original
-yourApp.get('/api-docs', (req, res) => res.send('API Docs'));
-yourApp.get('/health', (req, res) => res.send('Healthy'));
+// O teu código original (mantém a tua lógica)
+app.get('/api-docs', (req, res) => res.send('API Docs'));
+app.get('/health', (req, res) => res.send('Healthy'));
 
-// Usa a mesma porta
-yourApp.listen(PORT, () => {
-  console.log(`Ticket Manager Server running on port ${PORT}`);
+// Inicia o servidor
+app.listen(PORT, () => {
+  console.log(`Servidor a correr na porta ${PORT}`);
 });
 
 // Graceful shutdown
-function shutdown(signal) {
-  console.log(`${signal} received. Shutting down gracefully...`);
-  yourApp.close(() => process.exit(0));
-}
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  app.close(() => process.exit(0));
+});
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  app.close(() => process.exit(0));
+});
